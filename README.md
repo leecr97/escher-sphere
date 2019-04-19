@@ -27,7 +27,7 @@ Further work:
 -Giving the user the ability to choose symmetry groups.
 
 ## Images
-The half-edge mesh, with the bottom-most triangular face and the right-most edge selected.
+The half-edge mesh, with the bottom-most triangular face and the top-most edge selected.
 ![](images/progress1.png)
 The bottom vertex is also selected, but the point is too small to be easily visible at the moment.
 
