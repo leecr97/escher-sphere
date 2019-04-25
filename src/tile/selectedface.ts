@@ -128,6 +128,10 @@ class SelectedFace extends Drawable {
     gl.bufferData(gl.ARRAY_BUFFER, this.col4, gl.STATIC_DRAW);
   }
 
+  setFace(f: Face) {
+    this.face = f;
+  }
+
   drawMode(): GLenum {
     return gl.LINES;
   }

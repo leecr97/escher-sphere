@@ -71,7 +71,11 @@ void main()
 {
     vec3 lightPos = vec3(2.0, 1.0, 4.0);
     vec3 lightdiffuse = vec3(1.0);
-    vec4 col = vec4(lightdiffuse * lambert(fs_Nor, lightPos), 1.0);
+    vec3 lightPos2 = vec3(2.0, 1.0, -4.0);
+    vec3 lightdiffuse2 = vec3(1.0);
+    vec3 light = (lightdiffuse * lambert(fs_Nor, lightPos)) + (lightdiffuse2 * lambert(fs_Nor, lightPos2));
+
+    vec4 col = vec4(light, 1.0);
 
     col *= fs_Col;
     out_Col = col;

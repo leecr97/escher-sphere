@@ -71,6 +71,10 @@ class SelectedVertex extends Drawable {
     gl.bufferData(gl.ARRAY_BUFFER, this.col4, gl.STATIC_DRAW);
   }
 
+  setVertex(v: Vertex) {
+    this.vertex = v;
+  }
+
   drawMode(): GLenum {
     return gl.POINTS;
   }

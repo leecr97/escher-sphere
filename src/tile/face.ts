@@ -14,8 +14,13 @@ class Face {
     }
 
     // setters
-    setEdge(e: HalfEdge) {
+    setStartEdge(e: HalfEdge) {
         this.start_edge = e;
+    }
+
+    intersect(origin: vec3, dir: vec3) : boolean {
+
+        return false;
     }
 }
 

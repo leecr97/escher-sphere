@@ -10,8 +10,10 @@ class HalfEdge {
     next: HalfEdge;
     sym: HalfEdge;
 
-    constructor(v: Vertex, i: number) {
+    constructor(f: Face, v: Vertex, n: HalfEdge, i: number) {
+        this.face = f;
         this.vert = v;
+        this.next = n;
         this.id = i;
     }
 
@@ -27,6 +29,12 @@ class HalfEdge {
     }
     setSym(e: HalfEdge) {
         this.sym = e;
+    }
+
+    intersect(origin: vec3, dir: vec3) : boolean {
+        let prevVert: Vertex = this.sym.vert;
+
+        return false;
     }
 }
 

@@ -4,6 +4,7 @@ import {gl} from '../globals';
 import Face from "./face";
 import HalfEdge from "./halfedge";
 import Vertex from "./vertex";
+import * as Loader from 'webgl-obj-loader';
 
 class TileMesh extends Drawable {
     indices: Uint32Array;
@@ -16,15 +17,18 @@ class TileMesh extends Drawable {
     col3: Float32Array;
     col4: Float32Array;
 
-    faces: Face[];
-    halfEdges: HalfEdge[];
-    vertices: Vertex[];
+    faces: Face[] = [];
+    halfEdges: HalfEdge[] = [];
+    vertices: Vertex[] = [];
 
-    constructor(f: Face[], he: HalfEdge[], v: Vertex[]) {
+    objString: string;
+
+    constructor(objString: string) {
         super(); // Call the constructor of the super class. This is required.
-        this.faces = f;
-        this.halfEdges = he;
-        this.vertices = v;
+
+        this.objString = objString;
+        this.readFile();
+        // console.log(objString);
     }
 
     create() {
@@ -134,7 +138,178 @@ class TileMesh extends Drawable {
         gl.bufferData(gl.ARRAY_BUFFER, this.col4, gl.STATIC_DRAW);
     }
 
+    setData(f: Face[], e: HalfEdge[], v: Vertex[]) {
+        this.faces = f;
+        this.halfEdges = e;
+        this.vertices = v;
+    }
+
+    // readFile() {
+    //     var loadedMesh = new Loader.Mesh(this.objString);
+
+    //     let faceIndices: number[][] = [];
+    //     let verts: Vertex[] = [];
+
+    //     let store1: number = 0;
+    //     let store2: number = 0;
+    //     let store3: number = 0;
+
+    //     // let rawIndices: number[] = loadedMesh.getRawIndexData();
+    //     for (let i: number = 0; i < loadedMesh.indices.length; i++) {
+    //         // console.log("ind: " + loadedMesh.indices[i]);
+    //         if (i % 3 == 0) {
+    //             store1 = loadedMesh.indices[i]
+    //         }
+    //         else if (i % 3 == 1) {
+    //             store2 = loadedMesh.indices[i];
+    //         }
+    //         else if (i % 3 == 2) {
+    //             store3 = loadedMesh.indices[i];
+    //             let currIndices: number[] = [store1, store2, store3];
+    //             faceIndices.push(currIndices);
+    //         }
+    //     }
+    //     faceIndices.forEach(indices => {
+    //         console.log("ind: " + indices);
+    //     });
+
+    //     let counter: number = 0;
+    //     for (let i: number = 0; i < loadedMesh.vertices.length; i++) {
+    //         if (i % 3 == 0) {
+    //             store1 = loadedMesh.vertices[i]
+    //         }
+    //         else if (i % 3 == 1) {
+    //             store2 = loadedMesh.vertices[i];
+    //         }
+    //         else if (i % 3 == 2) {
+    //             store3 = loadedMesh.vertices[i];
+    //             verts.push(new Vertex(vec3.fromValues(store1, store2, store3), counter++));
+    //         }
+    //     }
+    //     this.vertices = verts;
+    //     this.vertices.forEach(v => {
+    //         // console.log("v: " + v.pos);
+    //     });
+
+    //     this.makeFaces(faceIndices);
+    //     this.makeSyms();
+    //     // this.create();
+        
+    // }
+
+    readFile() {
+        var objText = this.objString;
+
+        let counter: number = 0;
+        // a vector of vectors, where each vector contains the index data for a face.
+        let faceIndices: number[][] = [];
+        let verts: Vertex[] = [];
+
+        let lines = objText.split('\n');
+        for(let i: number = 0; i < lines.length; i++){
+            var line = lines[i];
+            if (line.startsWith("v ")) {
+                var strings = line.split(" ");
+                let vpos: vec3 = vec3.fromValues(Number(strings[1]), 
+                                                Number(strings[2]), 
+                                                Number(strings[3]));
+                let newVert: Vertex = new Vertex(vpos, counter++);
+                verts.push(newVert);
+            }
+            if (line.startsWith("f ")) {
+                var strings = line.split(" ");
+                let currIndices: number[] = [];
+                for (let j: number = 1; j < strings.length; j++) {
+                    let curr: string = strings[j];
+                    var data = curr.split("/");
+                    let index: number = Number(data[0]);
+                    currIndices.push(index);
+                }
+                faceIndices.push(currIndices);
+            }
+        }
+        faceIndices.forEach(indices => {
+            // console.log("ind: " + indices);
+        });
+        this.vertices = verts;
+        
+        this.makeFaces(faceIndices);
+        this.makeSyms();
+        // create();
+    }
+
+    makeFaces(data: number[][]) {
+        let counter: number = 0;
+        let eCounter: number = 0;
+
+        data.forEach(indices => {
+            let color: vec3 = vec3.fromValues(138.0 / 255.0, 181.0 / 255.0, 252.0 / 255.0)
+            // let color: vec3 = vec3.fromValues(Math.random(),
+            //                                   Math.random(),
+            //                                   Math.random());
+            let newFace: Face = new Face(color, counter++);
     
+            // console.log(indices[0] - 1);
+            let start_vert: Vertex = this.vertices[indices[0] - 1];
+            let curr: HalfEdge = null;
+            newFace.setStartEdge(new HalfEdge(newFace, start_vert, null, eCounter++));
+            start_vert.setEdge(newFace.start_edge);
+            curr = newFace.start_edge;
+            this.halfEdges.push(curr);
+            for (let i: number = 1; i < indices.length; i++) {
+                let nextVert: Vertex = this.vertices[indices[i] - 1];
+                let newEdge: HalfEdge = new HalfEdge(newFace, nextVert, null, eCounter++);
+                nextVert.setEdge(newEdge);
+                curr.setNext(newEdge);
+                curr = newEdge;
+                this.halfEdges.push(curr);
+            }
+            curr.setNext(newFace.start_edge);
+            this.faces.push(newFace);
+        });
+        
+    }
+    
+    makeSyms() {
+        // make a map that pairs edges to their "previous" vertices.
+        let map = new Map();
+    
+        this.faces.forEach(f => {
+            let start: HalfEdge = f.start_edge;
+            let second: HalfEdge = start.next;
+            let curr: HalfEdge = second;
+            let prev: Vertex = start.vert;
+            do {
+                map.set(curr, prev.id);
+                prev = curr.vert;
+                curr = curr.next;
+            } while (curr != second);
+        });
+    
+        // Cycle through the edges and use the map to find the one that is its sym
+        // If an edge goes from vertex "A" to "B", its sym should go from "B" to "A"
+        this.faces.forEach(f => {
+            let edgeList: IterableIterator<HalfEdge> = map.keys();
+            let start: HalfEdge = f.start_edge;
+            let curr: HalfEdge = start;
+            do {
+                let A: number = map.get(curr);
+                let B: number = curr.vert.id;
+
+                for (let check of edgeList) {
+                    if (check.vert.id == A) {
+                        if (map.get(check) == B) {
+                            curr.sym = check;
+                            break;
+                        }
+                    }
+                }
+
+                curr = curr.next;
+            } while (curr != start);
+        });
+    }
+
 }
 
 export default TileMesh;

@@ -96,6 +96,10 @@ class SelectedEdge extends Drawable {
     gl.bufferData(gl.ARRAY_BUFFER, this.col4, gl.STATIC_DRAW);
   }
 
+  setEdge(e: HalfEdge) {
+    this.edge = e;
+  }
+
   drawMode(): GLenum {
     return gl.LINES;
   }

@@ -16,6 +16,11 @@ class Vertex {
     setEdge(e: HalfEdge) {
         this.edge = e;
     }
+
+    intersect(origin: vec3, dir: vec3) : boolean {
+
+        return false;
+    }
 }
 
 export default Vertex;
