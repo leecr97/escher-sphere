@@ -1,6 +1,5 @@
 var CameraControls = require('3d-view-controls');
 import {vec3, mat4, vec2} from 'gl-matrix';
-import Ray from './ray'
 
 class Camera {
   controls: any;

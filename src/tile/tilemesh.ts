@@ -144,59 +144,6 @@ class TileMesh extends Drawable {
         this.vertices = v;
     }
 
-    // readFile() {
-    //     var loadedMesh = new Loader.Mesh(this.objString);
-
-    //     let faceIndices: number[][] = [];
-    //     let verts: Vertex[] = [];
-
-    //     let store1: number = 0;
-    //     let store2: number = 0;
-    //     let store3: number = 0;
-
-    //     // let rawIndices: number[] = loadedMesh.getRawIndexData();
-    //     for (let i: number = 0; i < loadedMesh.indices.length; i++) {
-    //         // console.log("ind: " + loadedMesh.indices[i]);
-    //         if (i % 3 == 0) {
-    //             store1 = loadedMesh.indices[i]
-    //         }
-    //         else if (i % 3 == 1) {
-    //             store2 = loadedMesh.indices[i];
-    //         }
-    //         else if (i % 3 == 2) {
-    //             store3 = loadedMesh.indices[i];
-    //             let currIndices: number[] = [store1, store2, store3];
-    //             faceIndices.push(currIndices);
-    //         }
-    //     }
-    //     faceIndices.forEach(indices => {
-    //         console.log("ind: " + indices);
-    //     });
-
-    //     let counter: number = 0;
-    //     for (let i: number = 0; i < loadedMesh.vertices.length; i++) {
-    //         if (i % 3 == 0) {
-    //             store1 = loadedMesh.vertices[i]
-    //         }
-    //         else if (i % 3 == 1) {
-    //             store2 = loadedMesh.vertices[i];
-    //         }
-    //         else if (i % 3 == 2) {
-    //             store3 = loadedMesh.vertices[i];
-    //             verts.push(new Vertex(vec3.fromValues(store1, store2, store3), counter++));
-    //         }
-    //     }
-    //     this.vertices = verts;
-    //     this.vertices.forEach(v => {
-    //         // console.log("v: " + v.pos);
-    //     });
-
-    //     this.makeFaces(faceIndices);
-    //     this.makeSyms();
-    //     // this.create();
-        
-    // }
-
     readFile() {
         var objText = this.objString;
 
@@ -272,7 +219,7 @@ class TileMesh extends Drawable {
     
     makeSyms() {
         // make a map that pairs edges to their "previous" vertices.
-        let map = new Map();
+        let map = new Map<HalfEdge, number>();
     
         this.faces.forEach(f => {
             let start: HalfEdge = f.start_edge;
@@ -289,17 +236,19 @@ class TileMesh extends Drawable {
         // Cycle through the edges and use the map to find the one that is its sym
         // If an edge goes from vertex "A" to "B", its sym should go from "B" to "A"
         this.faces.forEach(f => {
-            let edgeList: IterableIterator<HalfEdge> = map.keys();
+            let edgeList: HalfEdge[] = Array.from(map.keys());
             let start: HalfEdge = f.start_edge;
             let curr: HalfEdge = start;
             do {
                 let A: number = map.get(curr);
                 let B: number = curr.vert.id;
 
-                for (let check of edgeList) {
+                for (let i: number = 0; i < edgeList.length; i++) {
+                    let check: HalfEdge = edgeList[i];
                     if (check.vert.id == A) {
                         if (map.get(check) == B) {
                             curr.sym = check;
+                            // console.log("sym: " + curr.sym.id);
                             break;
                         }
                     }

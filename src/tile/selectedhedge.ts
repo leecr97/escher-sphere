@@ -73,7 +73,7 @@ class SelectedEdge extends Drawable {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.bufCol);
     gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
 
-    console.log(`Created selectedhedge`);
+    // console.log(`Created selectedhedge`);
   }
 
   setInstanceVBOs(col1: Float32Array, col2: Float32Array, col3: Float32Array, col4: Float32Array) {

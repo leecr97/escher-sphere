@@ -20,7 +20,7 @@ import {readTextFile} from './globals';
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
 const controls = {
-
+  SelectionMode: 1,
 };
 
 let time: number = 0.0;
@@ -28,9 +28,13 @@ let square: Square;
 let screenQuad: ScreenQuad;
 let sphere: Icosphere;
 let tileMesh: TileMesh;
+
 let selectedVertex: SelectedVertex;
 let selectedHEdge: SelectedHEdge;
 let selectedFace: SelectedFace;
+let sVertex: Vertex;
+let sHedge: HalfEdge;
+let sFace: Face;
 
 let screenX: number;
 let screenY: number;
@@ -38,6 +42,7 @@ let screenY: number;
 let hedges: HalfEdge[];
 let vertices: Vertex[];
 let faces: Face[];
+let selectionMode: number = 1;
 
 function loadScene() {
   square = new Square();
@@ -54,107 +59,7 @@ function loadScene() {
   let col3Array : number[] = [];
   let col4Array : number[] = [];
 
-  // draw sphere
-  // colorsArray = [255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 1.0];
-
-  // col1Array = [5, 0, 0, 0];
-  // col2Array = [0, 5, 0, 0];
-  // col3Array = [0, 0, 5, 0];
-  // col4Array = [0, 30, 0, 1];
-  // let colors : Float32Array = new Float32Array(colorsArray);
-  // let col1 : Float32Array = new Float32Array(col1Array);
-  // let col2 : Float32Array = new Float32Array(col2Array);
-  // let col3 : Float32Array = new Float32Array(col3Array);
-  // let col4 : Float32Array = new Float32Array(col4Array);
-  // sphere.setInstanceVBOs(colors, col1, col2, col3, col4);
-  // sphere.setNumInstances(1);
-
-  // draw squares
-  // for (let i: number = 0; i < 4; i++) {
-  //   colorsArray.push(255.0 / 255.0);
-  //   colorsArray.push(255.0 / 255.0);
-  //   colorsArray.push(255.0 / 255.0);
-  //   colorsArray.push(1.0);
-
-  //   col1Array.push(15);
-  //   col1Array.push(0);
-  //   col1Array.push(0);
-  //   col1Array.push(0);
-
-  //   col2Array.push(0);
-  //   col2Array.push(15);
-  //   col2Array.push(0);
-  //   col2Array.push(0);
-
-  //   col3Array.push(0);
-  //   col3Array.push(0);
-  //   col3Array.push(15);
-  //   col3Array.push(0);
-  // }
-  // col4Array = [-15, 15, 0, 1,
-  //              15, 15, 0, 1,
-  //              15, 45, 0, 1,
-  //              -15, 45, 0, 1];
-
-  // let colors : Float32Array = new Float32Array(colorsArray);
-  // let col1 : Float32Array = new Float32Array(col1Array);
-  // let col2 : Float32Array = new Float32Array(col2Array);
-  // let col3 : Float32Array = new Float32Array(col3Array);
-  // let col4 : Float32Array = new Float32Array(col4Array);
-  // square.setInstanceVBOs(colors, col1, col2, col3, col4);
-  // square.setNumInstances(4);
-
-  // tile mesh
-  // vertices = [];
-  // let v1: Vertex = new Vertex(vec3.fromValues(-15,15,0), 0);
-  // let v2: Vertex = new Vertex(vec3.fromValues(15, 15,0), 0);
-  // let v3: Vertex = new Vertex(vec3.fromValues(15, 45,0), 0);
-  // let v4: Vertex = new Vertex(vec3.fromValues(-15,45,0), 0);
-  // vertices.push(v1, v2, v3, v4);
-
-  // hedges = [];
-  // let h1: HalfEdge = new HalfEdge(null, v1, null, 0);
-  // v1.setEdge(h1);
-  // let h2: HalfEdge = new HalfEdge(null, v2, null, 1);
-  // v2.setEdge(h2);
-  // let h3: HalfEdge = new HalfEdge(null, v3, null, 2);
-  // v3.setEdge(h3);
-
-  // let h4: HalfEdge = new HalfEdge(null, v1, null, 3);
-  // let h5: HalfEdge = new HalfEdge(null, v3, null, 4);
-  // let h6: HalfEdge = new HalfEdge(null, v4, null, 5);
-  // v4.setEdge(h6);
-  // h1.setNext(h2);
-  // h2.setNext(h3);
-  // h3.setNext(h1);
-
-  // h4.setNext(h5);
-  // h5.setNext(h6);
-  // h6.setNext(h4);
-
-  // h1.setSym(h5);
-  // h2.setSym(null);
-  // h3.setSym(null);
-  // h4.setSym(null);
-  // h5.setSym(h1);
-  // h6.setSym(null);
-
-  // faces = [];
-  // let f1: Face = new Face(vec3.fromValues(138.0 / 255.0, 181.0 / 255.0, 252.0 / 255.0), 0);
-  // f1.setStartEdge(h1);
-  // h1.setFace(f1);
-  // h2.setFace(f1);
-  // h3.setFace(f1);
-  // let f2: Face = new Face(vec3.fromValues(138.0 / 255.0, 181.0 / 255.0, 252.0 / 255.0), 0);
-  // f2.setStartEdge(h4);
-  // h4.setFace(f2);
-  // h5.setFace(f2);
-  // h6.setFace(f2);
-  
-  // hedges.push(h1, h2, h3, h4, h5, h6);
-  // faces.push(f1, f2);
-
-  let cubeobj: string = readTextFile('./src/obj/cube.obj');
+  let cubeobj: string = readTextFile('./src/obj/dodecahedron.obj');
   tileMesh = new TileMesh(cubeobj);
   // tileMesh.setData(faces, hedges, vertices);
   tileMesh.create();
@@ -175,36 +80,90 @@ function loadScene() {
   tileMesh.setInstanceVBOs(col1, col2, col3, col4);
   tileMesh.setNumInstances(1);
 
+  sVertex = tileMesh.vertices[0];
+  sHedge = tileMesh.halfEdges[0];
+  sFace = tileMesh.faces[0];
+}
+
+function loadSelections() {
+  // Set up instanced rendering data arrays here.
+  let colorsArray : number[] = [];
+  let col1Array : number[] = [];
+  let col2Array : number[] = [];
+  let col3Array : number[] = [];
+  let col4Array : number[] = [];
+
+  col1Array = [1, 0, 0, 0];
+  col2Array = [0, 1, 0, 0];
+  col3Array = [0, 0, 1, 0];
+  col4Array = [0, 0, 0, 1];
+  let colors : Float32Array = new Float32Array(colorsArray);
+  let col1 : Float32Array = new Float32Array(col1Array);
+  let col2 : Float32Array = new Float32Array(col2Array);
+  let col3 : Float32Array = new Float32Array(col3Array);
+  let col4 : Float32Array = new Float32Array(col4Array);
+
   // selected vertex and hedge and face
-  selectedVertex = new SelectedVertex(tileMesh.vertices[0]);
+  selectedVertex = new SelectedVertex(sVertex);
   selectedVertex.create();
-  // col4Array = [v1.pos[0], v1.pos[1], v1.pos[2], 1];
-  // col4 = new Float32Array(col4Array);
   selectedVertex.setInstanceVBOs(col1, col2, col3, col4);
   selectedVertex.setNumInstances(1);
 
-  selectedHEdge = new SelectedHEdge(tileMesh.halfEdges[0]);
+  selectedHEdge = new SelectedHEdge(sHedge);
   selectedHEdge.create();
   selectedHEdge.setInstanceVBOs(col1, col2, col3, col4);
   selectedHEdge.setNumInstances(1);
 
-  selectedFace = new SelectedFace(tileMesh.faces[0]);
+  selectedFace = new SelectedFace(sFace);
   selectedFace.create();
   selectedFace.setInstanceVBOs(col1, col2, col3, col4);
   selectedFace.setNumInstances(1);
 }
 
 function intersectScene(eye: vec3, dir: vec3): boolean {
-  // if ray intersects face, change selected face and return true 
+  // if ray intersects face/hedge/vert, change selected that and return true 
   let ret: boolean = false;
+  let closest: number = 1000000;
+
   // console.log(dir[0] + ", " + dir[1] + ", " + dir[2]);
-  // hedges.forEach(e => {
-  //   if (e.intersect(eye, dir)) {
-  //     selectedHEdge.setEdge(e);
-  //     ret = true;
-  //     // z checking so we get the closest one?
-  //   }
-  // });
+  
+  if (selectionMode == 0) {
+    vertices.forEach(v => {
+      if (v.intersect(eye, dir)) {
+        let dist: number = vec3.dist(eye, v.pos);
+        if (dist < closest) {
+          closest = dist;
+          // selectedVertex.setVertex(v);
+          sVertex = v;
+          ret = true;
+          // console.log("found vertex");
+          // console.log("pos: " + v.pos);
+          // console.log("id: " + v.id);
+          loadSelections();
+        }
+      }
+    });
+  }
+  else if (selectionMode == 1) {
+    hedges.forEach(e => {
+      if (e.intersect(eye, dir)) {
+        let dist: number = vec3.dist(eye, e.vert.pos);
+        if (dist < closest) {
+          closest = dist;
+          // selectedHEdge.setEdge(e);
+          sHedge = e;
+          ret = true;
+          // console.log("found edge");
+          // console.log("pos: " + e.vert.pos);
+          // console.log("id: " + e.id);
+          loadSelections();
+        }
+      }
+    });
+  }
+  else if (selectionMode == 2) {
+
+  }
 
   return ret;
 }
@@ -265,7 +224,7 @@ function main() {
   // Add controls to the gui
   const gui = new DAT.GUI();
   // gui.add(controls, 'Iterations', 0, 5);
-  // gui.add(controls, 'Season', {Summer: 0, Fall: 1, Winter: 2, Spring: 3});
+  gui.add(controls, 'SelectionMode', {Vertex: 0, Edge: 1, Face: 2});
   // gui.add(controls, 'Angle', 0, 45);
 
   // get canvas and webgl context
@@ -280,6 +239,7 @@ function main() {
 
   // Initial call to load scene
   loadScene();
+  loadSelections();
 
   // const camera = new Camera(vec3.fromValues(50, 50, 10), vec3.fromValues(50, 50, 0));
   // const camera = new Camera(vec3.fromValues(10, 40, 70), vec3.fromValues(0, 30, 0));
@@ -327,7 +287,7 @@ function main() {
       tileMesh,
       selectedVertex,
       selectedHEdge,
-      selectedFace,
+      // selectedFace,
     ]);
     stats.end();
 
