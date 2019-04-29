@@ -1,4 +1,4 @@
-import {vec3, vec4} from 'gl-matrix';
+import {vec3, vec4, mat4} from 'gl-matrix';
 import Drawable from '../rendering/gl/Drawable';
 import {gl} from '../globals';
 import HalfEdge from './halfedge';
@@ -39,16 +39,31 @@ class SelectedEdge extends Drawable {
 
     let pos1: vec3 = this.edge.vert.pos;
     let pos2: vec3 = posList[posList.length - 1];
-    // console.log("pos1: " + pos1[0] + ", " + pos1[1] + ", " + pos1[2]);
-    // console.log("pos2: " + pos2[0] + ", " + pos2[1] + ", " + pos2[2]);
 
     this.indices = new Uint32Array([0,1]);
+    // this.indices = new Uint32Array([0, 1, 2,
+    //                                 0, 2, 3]);
+
     this.positions = new Float32Array([pos1[0], pos1[1], pos1[2], 1.0,
                                        pos2[0], pos2[1], pos2[2], 1.0]);
+    // this.positions = new Float32Array([pos1[0] - 0.005, pos1[1] - 0.005, pos1[2]+0.001, 1.0,
+    //                                    pos2[0] + 0.005, pos2[1] - 0.005, pos2[2]+0.001, 1.0,
+    //                                    pos2[0] + 0.005, pos2[1] + 0.005, pos2[2]+0.001, 1.0,
+    //                                    pos1[0] - 0.005, pos1[1] + 0.005, pos1[2]+0.001, 1.0]);
+
     this.normals = new Float32Array([n[0], n[1], n[2], 0.0,
                                      n[0], n[1], n[2], 0.0]);
-    this.colors = new Float32Array([1, 1, 0, 1.0,
-                                    1, 0, 0, 1.0]);
+    // this.normals = new Float32Array([n[0], n[1], n[2], 0,
+    //                                  n[0], n[1], n[2], 0,
+    //                                  n[0], n[1], n[2], 0,
+    //                                  n[0], n[1], n[2], 0]);
+
+    // this.colors = new Float32Array([1, 1, 0, 1.0,
+    //                                 1, 0, 0, 1.0]);
+    // this.colors = new Float32Array([1, 1, 0, 1.0,
+    //                                 1, 0, 0, 1.0,
+    //                                 1, 0, 0, 1.0,
+    //                                 1, 1, 0, 1.0]);
 
     this.generateIdx();
     this.generatePos();
@@ -70,21 +85,21 @@ class SelectedEdge extends Drawable {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.bufNor);
     gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufCol);
-    gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+    // gl.bindBuffer(gl.ARRAY_BUFFER, this.bufCol);
+    // gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
 
     // console.log(`Created selectedhedge`);
   }
 
-  setInstanceVBOs(col1: Float32Array, col2: Float32Array, col3: Float32Array, col4: Float32Array) {
+  setInstanceVBOs(colors: Float32Array, col1: Float32Array, col2: Float32Array, col3: Float32Array, col4: Float32Array) {
     this.col1 = col1;
     this.col2 = col2;
     this.col3 = col3;
     this.col4 = col4;
-    // this.colors = colors;
+    this.colors = colors;
 
-    // gl.bindBuffer(gl.ARRAY_BUFFER, this.bufCol);
-    // gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufCol);
+    gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.bufTransform1);
     gl.bufferData(gl.ARRAY_BUFFER, this.col1, gl.STATIC_DRAW);
@@ -101,7 +116,12 @@ class SelectedEdge extends Drawable {
   }
 
   drawMode(): GLenum {
+    // return gl.TRIANGLES
     return gl.LINES;
+  }
+
+  getTransform(): mat4 {
+    return this.edge.getTransform(0.0);
   }
 }
 

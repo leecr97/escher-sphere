@@ -25,5 +25,8 @@ void main() {
   fs_Pos = vs_Pos;
   fs_Nor = vs_Nor;
 
-  gl_Position = u_ViewProj * vs_Pos;
+  mat4 transform = mat4(vs_Transform1, vs_Transform2, vs_Transform3, vs_Transform4);
+  vec4 tPos = transform * vs_Pos;
+
+  gl_Position = u_ViewProj * tPos;
 }

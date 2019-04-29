@@ -6,6 +6,8 @@ class Vertex {
     pos: vec3;
     id: number;
     edge: HalfEdge;
+    movable: boolean;
+    group: number;
 
     constructor(p: vec3, i: number) {
         this.pos = p;
@@ -16,8 +18,14 @@ class Vertex {
     setEdge(e: HalfEdge) {
         this.edge = e;
     }
+    setMovable(m: boolean) {
+        this.movable = m;
+    }
+    setGroup(g: number) {
+        this.group = g;
+    }
 
-    intersect(origin: vec3, dir: vec3) : boolean {
+    intersect(origin: vec3, dir: vec3, ptRef: any) : boolean {
         vec3.normalize(dir,dir);
         let radius: number = 0.2;
         // no need to transform ray
@@ -44,6 +52,7 @@ class Vertex {
         // console.log("eye: " + origin);
         // console.log("plant: " + planeDist);
         // console.log("");
+        ptRef.pt = p;
 
         if(t > 0 && dist <= radius)
         {
@@ -51,6 +60,10 @@ class Vertex {
             return true;
         }
         return false;
+    }
+
+    move(newPos: vec3) {
+        this.pos = newPos;
     }
 }
 

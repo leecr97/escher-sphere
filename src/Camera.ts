@@ -1,5 +1,5 @@
-var CameraControls = require('3d-view-controls');
-import {vec3, mat4, vec2} from 'gl-matrix';
+var CameraControls = require('./CustomCamera.js');
+import {vec3, mat4, vec2, glMatrix} from 'gl-matrix';
 
 class Camera {
   controls: any;
@@ -68,6 +68,10 @@ class Camera {
     vec3.normalize(this.right, this.right);
     vec3.cross(this.up, this.right, this.forward);
     vec3.normalize(this.up, this.up);
+  }
+
+  toggleFreeze() {
+    this.controls.toggleFreeze();
   }
 
   // raycast(pt: vec2): vec3
