@@ -74,11 +74,6 @@ class Camera {
     this.controls.toggleFreeze();
   }
 
-  // raycast(pt: vec2): vec3
-  // {
-  //     return this.raycast(pt[0], pt[1]);
-  // }
-
   raycast(x: number, y: number): vec3
   {
     let ndc_x: number = (2 * x/this.width - 1);

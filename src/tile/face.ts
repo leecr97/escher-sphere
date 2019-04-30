@@ -22,6 +22,31 @@ class Face {
 
         return false;
     }
+
+    getCenter(): vec3 {
+        let curr: HalfEdge = this.start_edge;
+        let posList: vec3[] = [];
+
+        do {
+            posList.push(curr.vert.pos);
+            curr = curr.next;
+        } while (curr != this.start_edge);
+
+        let xTotal: number = 0;
+        let yTotal: number = 0;
+        let zTotal: number = 0;
+
+        for (let i: number = 0; i < posList.length; i++) {
+            xTotal += posList[i][0];
+            yTotal += posList[i][1];
+            zTotal += posList[i][2];
+        }
+        xTotal /= posList.length;
+        yTotal /= posList.length;
+        zTotal /= posList.length;
+
+        return vec3.fromValues(xTotal, yTotal, zTotal);
+    };
 }
 
 export default Face;

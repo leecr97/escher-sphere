@@ -85,7 +85,7 @@ class HalfEdge {
     }
 
     getInverseTransform(): mat4 {
-        let transform: mat4 = this.getTransform(1.0);
+        let transform: mat4 = this.getTransform(2.0);
         let ret: mat4 = mat4.create();
         mat4.invert(ret, transform);
 
@@ -101,99 +101,57 @@ class HalfEdge {
     }
 
     getTransform(yscale: number): mat4 {
-        // let curr: HalfEdge = this;
-        // let posList: vec3[] = [];
+        let curr: HalfEdge = this;
+        let posList: vec3[] = [];
 
-        // do {
-        //     posList.push(curr.vert.pos);
-        //     curr = curr.next;
-        // } while (curr != this);
+        do {
+            posList.push(curr.vert.pos);
+            curr = curr.next;
+        } while (curr != this);
 
-        // let p1: vec3 = this.vert.pos;
-        // let p2: vec3 = posList[posList.length - 1];
-
-        let prevVert: Vertex = this.sym.vert;
         let p1: vec3 = this.vert.pos;
-        let p2: vec3 = prevVert.pos;
-        let len: number = vec3.dist(p1, p2);
+        let p2: vec3 = posList[posList.length - 1];
+
+        // let prevVert: Vertex = this.sym.vert;
+        // let p1: vec3 = this.vert.pos;
+        // let p2: vec3 = prevVert.pos;
+
+        let dir: vec3 = vec3.create();
+        vec3.subtract(dir, p2, p1);
+        let len: number = vec3.length(dir);
         // console.log("p1: " + p1);
         // console.log("p2: " + p2);
         // console.log("");
         // console.log(len);
-
-        // rotate
-        // let dir: vec3 = vec3.create();
-        // vec3.subtract(dir, p2, p1);
-        // // x axis
-        // let xaxis: vec3 = vec3.fromValues(1,0,0);
-        // let xangle: number = this.findAngle(vec3.fromValues(0,1,0), dir);
-        // // y axis
-        // let yaxis: vec3 = vec3.fromValues(0,1,0);
-        // let yangle: number = this.findAngle(vec3.fromValues(0,0,1), dir);
-        // // z axis
-        // let zaxis: vec3 = vec3.fromValues(0,0,1);
-        // let zangle: number = this.findAngle(vec3.fromValues(0,1,0), dir);
-
-        // let xq: quat = quat.create();
-        // quat.setAxisAngle(xq, xaxis, xangle);
-        // let yq: quat = quat.create();
-        // quat.setAxisAngle(yq, yaxis, yangle);
-        // let zq: quat = quat.create();
-        // quat.setAxisAngle(zq, zaxis, zangle);
-
-        // let rq: quat = quat.create();
-        // quat.multiply(rq, xq, yq);
-        // quat.multiply(rq, rq, zq);
         
         // rotate
         let rq: quat = quat.create();
-        let dir: vec3 = vec3.create();
-        vec3.subtract(dir, p2, p1);
         quat.rotationTo(rq, vec3.fromValues(0,1,0), dir);
 
         // let a: vec3 = vec3.create();
         // vec3.subtract(a, p2, p1);
+        // vec3.normalize(a,a);
         // let b: vec3 = vec3.fromValues(0,1,0);
         // // let lenB: number = vec3.len(b);
         // let proj: vec3 = vec3.create();
-        // // let temp: vec3 = vec3.create();
         // vec3.cross(proj, a, b);
         // vec3.cross(proj, b, proj);
 
         // let yaw: number = this.findAngle(vec3.fromValues(1,0,0), proj);
         // let yawQuat: quat = quat.create();
-        // quat.setAxisAngle(yawQuat, vec3.fromValues(0,1,0), yaw);
+        // // quat.setAxisAngle(yawQuat, vec3.fromValues(0,1,0), yaw);
+        // quat.rotationTo(yawQuat, vec3.fromValues(1,0,0), proj);
 
-        // let elevation: number = vec3.dot(a, proj);
+        // // let elevation: number = vec3.dot(a, proj);
+        // let elevation: number = this.findAngle(a, proj);
         // let projperp: vec3 = vec3.create();
         // vec3.rotateY(projperp, projperp, proj, 90.0);
         // vec3.normalize(projperp, projperp);
         // let eleQuat: quat = quat.create();
-        // quat.setAxisAngle(eleQuat, projperp, elevation);
+        // // quat.setAxisAngle(eleQuat, projperp, elevation);
+        // quat.rotationTo(eleQuat, a, proj);
 
         // quat.multiply(rq, yawQuat, eleQuat);
-
-        // let a: vec3 = vec3.fromValues(1,0,0);
-        // let b: vec3 = vec3.create();
-        // vec3.subtract(b, p2, p1);
-        // vec3.normalize(b,b);
-        // let v: vec3 = vec3.create();
-        // vec3.cross(v, a, b);
-        // let c: number = vec3.dot(a,b);
-        // let vx: mat3 = mat3.fromValues(0, v[2], -1.0 * v[1],
-        //                                -1.0 * v[2], 0, v[0], 
-        //                                v[1], -1.0 * v[0], 0);
-        // let vx2: mat3 = mat3.create();
-        // mat3.multiply(vx2, vx, vx);
-        // mat3.multiplyScalar(vx2, vx2, 1.0 / (1 + c));
-        // let i: mat3 = mat3.create();
-        // mat3.identity(i);
-        // let r: mat3 = mat3.create();
-        // mat3.add(r, r, i);
-        // mat3.add(r, r, vx);
-        // mat3.add(r, r, vx2);
-        // quat.fromMat3(rq, r);
-        // quat.normalize(rq, rq);
 
         // translate
         let midpoint: vec3 = vec3.fromValues((p1[0] + p2[0]) / 2,
@@ -204,7 +162,7 @@ class HalfEdge {
         let s: vec3 = vec3.fromValues(len, yscale, 0.1);
 
         let transformMat: mat4 = mat4.create();
-        mat4.fromRotationTranslationScale(transformMat, rq, p1, s);
+        mat4.fromRotationTranslationScale(transformMat, rq, midpoint, s);
         return transformMat;
     }
 }

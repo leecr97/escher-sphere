@@ -14,6 +14,8 @@ import HalfEdge from './tile/halfedge'
 import Face from './tile/face'
 import SelectedVertex from './tile/selectedvertex'
 import SelectedHEdge from './tile/selectedhedge'
+import SelectedEdgeGroup from './tile/selectedhedgegroup'
+import SelectedVertexGroup from './tile/selectedvertgroup'
 import SelectedFace from './tile/selectedface'
 import {readTextFile} from './globals';
 
@@ -22,7 +24,11 @@ import {readTextFile} from './globals';
 const controls = {
   SelectionMode: 1,
   MoveVerts: false,
-  'Split Edge': splitEdge,
+  'Add Vertex': splitEdge,
+  'Extrude': extrude,
+  Red: 138,
+  Green: 181,
+  Blue: 252,
 };
 
 let time: number = 0.0;
@@ -33,10 +39,12 @@ let tileMesh: TileMesh;
 
 let selectedVertex: SelectedVertex;
 let selectedHEdge: SelectedHEdge;
-// let selectedFace: SelectedFace;
+let selectVerts: SelectedVertexGroup;
+let selectHedges: SelectedEdgeGroup;
+let selectedFace: SelectedFace;
 let sVertex: Vertex;
 let sHedge: HalfEdge;
-// let sFace: Face;
+let sFace: Face;
 
 let screenX: number;
 let screenY: number;
@@ -49,6 +57,11 @@ let selectionMode: number = 1;
 let drag: boolean = false;
 let down: boolean = false;
 let moving: boolean = false;
+let extruded: boolean = false;
+
+let red: number = 138;
+let green: number = 181;
+let blue: number = 252;
 
 function loadInitialScene() {
   // square = new Square();
@@ -67,13 +80,12 @@ function loadInitialScene() {
 
   let cubeobj: string = readTextFile('./src/obj/icosphere.obj');
   tileMesh = new TileMesh(cubeobj);
-  // tileMesh.setData(faces, hedges, vertices);
   tileMesh.create();
   vertices = tileMesh.vertices;
   hedges = tileMesh.halfEdges;
   faces = tileMesh.faces;
 
-  // colorsArray = [255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 1.0];
+  colorsArray = [red / 255.0, green / 255.0, blue / 255.0, 1.0];
   col1Array = [1, 0, 0, 0];
   col2Array = [0, 1, 0, 0];
   col3Array = [0, 0, 1, 0];
@@ -83,11 +95,11 @@ function loadInitialScene() {
   let col2 : Float32Array = new Float32Array(col2Array);
   let col3 : Float32Array = new Float32Array(col3Array);
   let col4 : Float32Array = new Float32Array(col4Array);
-  tileMesh.setInstanceVBOs(col1, col2, col3, col4);
+  tileMesh.setInstanceVBOs(colors, col1, col2, col3, col4);
   tileMesh.setNumInstances(1);
 
-  sVertex = tileMesh.vertices[0];
-  sHedge = tileMesh.halfEdges[0];
+  sVertex = tileMesh.vertices[Math.floor(Math.random() * tileMesh.vertices.length)];
+  sHedge = tileMesh.halfEdges[Math.floor(Math.random() * tileMesh.halfEdges.length)];
   // sFace = tileMesh.faces[0];
 
   console.log(`Created tilemesh with ` + 
@@ -106,6 +118,7 @@ function reloadMesh() {
   let col3Array : number[] = [];
   let col4Array : number[] = [];
 
+  colorsArray = [red / 255.0, green / 255.0, blue / 255.0, 1.0];
   col1Array = [1, 0, 0, 0];
   col2Array = [0, 1, 0, 0];
   col3Array = [0, 0, 1, 0];
@@ -115,7 +128,7 @@ function reloadMesh() {
   let col2 : Float32Array = new Float32Array(col2Array);
   let col3 : Float32Array = new Float32Array(col3Array);
   let col4 : Float32Array = new Float32Array(col4Array);
-  tileMesh.setInstanceVBOs(col1, col2, col3, col4);
+  tileMesh.setInstanceVBOs(colors, col1, col2, col3, col4);
   tileMesh.setNumInstances(1);
 }
 
@@ -130,103 +143,52 @@ function loadSelections() {
   // selected vertex 
   selectedVertex = new SelectedVertex(sVertex);
   selectedVertex.create();
-
-  let vgroup: number = sVertex.group;
-  let vertGroup: Vertex[] = tileMesh.vertMap.get(vgroup);
-  let len: number = 1;
-
-  // if (vertGroup == null) {
-    colorsArray = [255.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 1.0];
-    col1Array = [1, 0, 0, 0];
-    col2Array = [0, 1, 0, 0];
-    col3Array = [0, 0, 1, 0];
-    col4Array = [0, 0, 0, 1];
-  // }
-  // else {
-  //   for (let i: number = 0; i < vertGroup.length; i++) {
-  //     let v: Vertex = vertGroup[i];
-
-  //     colorsArray.push(255.0 / 255.0);
-  //     colorsArray.push(255.0 / 255.0);
-  //     colorsArray.push(255.0 / 255.0);
-  //     colorsArray.push(1.0);
-
-  //     col1Array.push(v.pos[0]);
-  //     col1Array.push(0.0);
-  //     col1Array.push(0.0);
-  //     col1Array.push(0.0);
-
-  //     col2Array.push(0.0);
-  //     col2Array.push(v.pos[1]);
-  //     col2Array.push(0.0);
-  //     col2Array.push(0.0);
-
-  //     col3Array.push(0.0);
-  //     col3Array.push(0.0);
-  //     col3Array.push(v.pos[2]);
-  //     col3Array.push(0.0);
-
-  //     col4Array.push(1.0);
-  //     col4Array.push(1.0);
-  //     col4Array.push(1.0);
-  //     col4Array.push(1.0);
-  //   }
-  //   len = vertGroup.length;
-  // }
+  colorsArray = [255.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 1.0];
+  col1Array = [1, 0, 0, 0];
+  col2Array = [0, 1, 0, 0];
+  col3Array = [0, 0, 1, 0];
+  col4Array = [0, 0, 0, 1];
   let colors : Float32Array = new Float32Array(colorsArray);
   let col1 : Float32Array = new Float32Array(col1Array);
   let col2 : Float32Array = new Float32Array(col2Array);
   let col3 : Float32Array = new Float32Array(col3Array);
   let col4 : Float32Array = new Float32Array(col4Array);
   selectedVertex.setInstanceVBOs(colors, col1, col2, col3, col4);
-  selectedVertex.setNumInstances(len);
+  selectedVertex.setNumInstances(1);
+
+  let vgroup: number = sVertex.group;
+  let vertGroup: Vertex[];
+  if (vgroup == 0 ) {
+    vertGroup = [];
+  }
+  else {
+    vertGroup = tileMesh.vertMap.get(vgroup);
+  }
+  selectVerts = new SelectedVertexGroup(vertGroup);
+  selectVerts.create();
+  colorsArray = [255.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 1.0];
+  colors = new Float32Array(colorsArray);
+  selectVerts.setInstanceVBOs(colors, col1, col2, col3, col4);
+  selectVerts.setNumInstances(1);
 
   // edges
   selectedHEdge = new SelectedHEdge(sHedge);
   selectedHEdge.create();
-  colorsArray = [];
-
-  let egroup: number = sHedge.group;
-  let hedgeGroup: HalfEdge[] = tileMesh.edgeMap.get(egroup);
-  // console.log(hedgeGroup.length);
-  
-  // for (let i: number = 0; i < hedgeGroup.length; i++) {
-  //   let t: mat4 = hedgeGroup[i].getTransform(0.0);
-  //   // console.log(t);
-
-  //   colorsArray.push(255.0 / 255.0);
-  //   colorsArray.push(255.0 / 255.0);
-  //   colorsArray.push(255.0 / 255.0);
-  //   colorsArray.push(1.0);
-
-  //   col1Array.push(t[0]);
-  //   col1Array.push(t[1]);
-  //   col1Array.push(t[2]);
-  //   col1Array.push(t[3]);
-
-  //   col2Array.push(t[4]);
-  //   col2Array.push(t[5]);
-  //   col2Array.push(t[6]);
-  //   col2Array.push(t[7]);
-
-  //   col3Array.push(t[8]);
-  //   col3Array.push(t[9]);
-  //   col3Array.push(t[10]);
-  //   col3Array.push(t[11]);
-
-  //   col4Array.push(t[12]);
-  //   col4Array.push(t[13]);
-  //   col4Array.push(t[14]);
-  //   col4Array.push(t[15]);
-  // }
-  colorsArray = [255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 1.0];
+  colorsArray = [255.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 1.0];
   colors = new Float32Array(colorsArray);
-  col1 = new Float32Array(col1Array);
-  col2 = new Float32Array(col2Array);
-  col3 = new Float32Array(col3Array);
-  col4 = new Float32Array(col4Array);
   selectedHEdge.setInstanceVBOs(colors, col1, col2, col3, col4);
   selectedHEdge.setNumInstances(1);
+
+  let egroup: number = sHedge.group;
+  let hedgeGroup: HalfEdge[];
+  hedgeGroup = tileMesh.edgeMap.get(egroup);
+
+  selectHedges = new SelectedEdgeGroup(hedgeGroup);
+  selectHedges.create();
+  colorsArray = [255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 1.0];
+  colors = new Float32Array(colorsArray);
+  selectHedges.setInstanceVBOs(colors, col1, col2, col3, col4);
+  selectHedges.setNumInstances(1);
 
   // selectedFace = new SelectedFace(sFace);
   // selectedFace.create();
@@ -235,11 +197,9 @@ function loadSelections() {
 }
 
 function intersectScene(eye: vec3, dir: vec3): boolean {
-  // if ray intersects face/hedge/vert, change selected that and return true 
+  // if ray intersects hedge/vert, change selected that and return true 
   let ret: boolean = false;
   let closest: number = 1000000;
-
-  // console.log(dir[0] + ", " + dir[1] + ", " + dir[2]);
   
   if (selectionMode == 0) {
     let tempPt: vec3 = vec3.create();
@@ -261,12 +221,8 @@ function intersectScene(eye: vec3, dir: vec3): boolean {
         let dist: number = vec3.dist(eye, e.vert.pos);
         if (dist < closest) {
           closest = dist;
-          // selectedHEdge.setEdge(e);
           sHedge = e;
           ret = true;
-          // console.log("found edge " + e.id);
-          // console.log("pos: " + e.vert.pos);
-          // console.log("id: " + e.id);
         }
       }
     });
@@ -278,48 +234,25 @@ function intersectScene(eye: vec3, dir: vec3): boolean {
 
 function splitEdge() {
   let ind: number = hedges.indexOf(sHedge);
-  // console.log("id1: " + sHedge.id);
   let newVert: Vertex = tileMesh.splitEdge(tileMesh.halfEdges[ind]);
   sVertex = newVert;
   reloadMesh();
   loadSelections();
 }
 
-function main() {
-  // window.addEventListener('keypress', function (e) {
-  //   // console.log(e.key);
-  //   switch(e.key) {
-  //     case 'w':
-  //     // wPressed = true;
-  //     break;
-  //     case 'a':
-  //     // aPressed = true;
-  //     break;
-  //     case 's':
-  //     // sPressed = true;
-  //     break;
-  //     case 'd':
-  //     // dPressed = true;
-  //     break;
-  //   }
-  // }, false);
+function extrude() {
+  if (!extruded) {
+    extruded = true;
+    let num: number = tileMesh.faces.length;
+    for (let i: number = 0; i < num; i++) {
+      tileMesh.extrude(tileMesh.faces[i]);
+    }
+    reloadMesh();
+    loadSelections();
+  }
+}
 
-  // window.addEventListener('keyup', function (e) {
-  //   switch(e.key) {
-  //     case 'w':
-  //     // wPressed = false;
-  //     break;
-  //     case 'a':
-  //     // aPressed = false;
-  //     break;
-  //     case 's':
-  //     // sPressed = false;
-  //     break;
-  //     case 'd':
-  //     // dPressed = false;
-  //     break;
-  //   }
-  // }, false);
+function main() {
 
   window.addEventListener("mousedown", function(e){
     drag = false;
@@ -334,22 +267,35 @@ function main() {
       screenY = e.clientY;
       let ray_dir: vec3 = camera.raycast(screenX, screenY);
     
-      if (sVertex.movable) {
+      if (sVertex.movable && !extruded) {
         let tempPt: vec3 = vec3.create();
         var temp = {pt: tempPt};
         // make sure mouse is on the selected vertex
         if (sVertex.intersect(camera.position, ray_dir, temp)) {
           tempPt = temp.pt;
-          // console.log(tempPt);
+
           // move vertex
           let ind: number = vertices.indexOf(sVertex);
-          // console.log(ind);
-          vertices[ind].pos = tempPt;
+          let dist: vec3 = vec3.create();
+          vec3.subtract(dist, tempPt, vertices[ind].pos);
+          let forward: vec3 = vec3.create();
+          var forwardRef = {forw: forward};
+          vertices[ind].move(dist, forwardRef);
+          forward = forwardRef.forw;
+
+          let group: number = vertices[ind].group;
+          let vertGroup: Vertex[] = tileMesh.vertMap.get(group);
+          for (let i : number = 0; i < vertGroup.length; i++) {
+            let indd: number = vertices.indexOf(vertGroup[i]);
+            if (indd == ind) continue;
+            vertices[indd].moveSym(dist, forward);
+          }
+          // vertices[ind].move(dist);
           sVertex = vertices[ind];
+
+
           reloadMesh();
           loadSelections();
-          // sVertex.pos = tempPt;
-          // loadSelections();
         }
       }
       
@@ -365,7 +311,7 @@ function main() {
         // console.log(screenX + ", " + screenY);
 
         // dont register clicks in the gui area
-        if (screenX > 550 && screenX < 795 && screenY < 102) {
+        if (screenX > 1020 && screenX < 1265 && screenY < 102) {
           return;
         }
 
@@ -388,11 +334,16 @@ function main() {
 
   // Add controls to the gui
   const gui = new DAT.GUI();
-  // gui.add(controls, 'Iterations', 0, 5);
+  var sf = gui.addFolder('Sphere Color')
+  sf.add(controls, 'Red', 0, 255);
+  sf.add(controls, 'Green', 0, 255);
+  sf.add(controls, 'Blue', 0, 255);
+
   gui.add(controls, 'SelectionMode', {Vertex: 0, Edge: 1});
   gui.add(controls, 'MoveVerts');
-  gui.add(controls, 'Split Edge');
-  // gui.add(controls, 'Angle', 0, 45);
+  gui.add(controls, 'Add Vertex');
+  gui.add(controls, 'Extrude');
+
 
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
@@ -449,6 +400,18 @@ function main() {
       moving = controls.MoveVerts;
       camera.toggleFreeze();
     }
+    if (controls.Red != red) {
+      red = controls.Red;
+      reloadMesh();
+    }
+    if (controls.Green != green) {
+      green = controls.Green;
+      reloadMesh();
+    }
+    if (controls.Blue != blue) {
+      blue = controls.Blue;
+      reloadMesh();
+    }
 
     renderer.clear();
     renderer.render(camera, flat, [screenQuad]);
@@ -462,6 +425,8 @@ function main() {
       tileMesh,
       selectedVertex,
       selectedHEdge,
+      selectVerts,
+      selectHedges,
       // selectedFace,
     ]);
     stats.end();

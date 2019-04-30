@@ -1,6 +1,7 @@
-import {vec3, vec4, vec2} from 'gl-matrix';
+import {vec3, vec4, vec2, quat} from 'gl-matrix';
 import {gl} from '../globals';
 import HalfEdge from './halfedge';
+import Face from './face'
 
 class Vertex {
     pos: vec3;
@@ -41,29 +42,41 @@ class Vertex {
         let p: vec3 = vec3.create();
         vec3.scale(dir, dir, t);
         vec3.add(p, dir, origin);
+
         //Check that P is within the bounds of the disc (not bothering to take the sqrt of the dist b/c we know the radius)
-        let dist2: number = p[0] * p[0] + p[1] * p[1];
-        // let dist: number = vec2.dist(vec2.fromValues(this.pos[0], this.pos[1]), 
-        //                             vec2.fromValues(p[0], p[1]));
         let dist: number = vec3.dist(this.pos, p);
-        // console.log("p: " + p);
-        // console.log("pos: " + this.pos);
-        // console.log("dist: " + dist);
-        // console.log("eye: " + origin);
-        // console.log("plant: " + planeDist);
-        // console.log("");
         ptRef.pt = p;
 
         if(t > 0 && dist <= radius)
         {
-            // InitializeIntersection(isect, t, P);
             return true;
         }
         return false;
     }
 
-    move(newPos: vec3) {
-        this.pos = newPos;
+    move(dist: vec3, forwRef: any) {
+        let nextVert: Vertex = this.edge.sym.vert;
+        let forward: vec3 = vec3.create();
+        vec3.subtract(forward, nextVert.pos, this.pos);
+        vec3.normalize(forward, forward);
+        forwRef.forw = forward;
+
+        vec3.add(this.pos, this.pos, dist);
+    }
+
+    moveSym(dist: vec3, forwRef: vec3) {
+        let nextVert: Vertex = this.edge.sym.vert;
+        let forward: vec3 = vec3.create();
+        vec3.subtract(forward, nextVert.pos, this.pos);
+        vec3.normalize(forward, forward);
+
+        let rq: quat = quat.create();
+        quat.rotationTo(rq, forwRef, forward);
+
+        let distTrans: vec3 = vec3.create();
+        vec3.transformQuat(distTrans, dist, rq);
+
+        vec3.add(this.pos, this.pos, distTrans);
     }
 }
 
